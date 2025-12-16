@@ -12,8 +12,10 @@ export const dynamic = "force-dynamic"
 
 // Added metadata for the page to improve SEO and provide a better user experience.
 export const metadata: Metadata = {
-  title: "Discover Properties",
-  description: "Explore properties via map or list view",
+  title: "Propsoch - Discover Properties for Sale",
+  description: "Discover and Explore Properties Seamlessly with Propsoch",
+
+
 };
 
 // TODO: Create a List view for these properties.
@@ -23,7 +25,7 @@ export const metadata: Metadata = {
 // You can modify the Property Listing however you want. If you feel like creating an API and implementing pagination via that, totally your call.
 // [Done]
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 10
 
 export default async function Page({
   searchParams,
