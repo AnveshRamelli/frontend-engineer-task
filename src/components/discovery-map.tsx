@@ -2,12 +2,15 @@
 
 // TODO:  When zooming out, property nodes overlap and become cluttered.
 // Improve visual spacing for a better UI/UX.
+// ----> Completed: // Fixed by using marker clustering.
+
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 import "leaflet/dist/leaflet.css";
 
 // TODO : This import gives "window is not defined" error in the terminal. Fix it.
 import "leaflet-defaulticon-compatibility";
-
 
 // TODO : Clicking a marker should ideally open the popup with the selected property details. Currently not implemented. Implement it.
 
@@ -30,6 +33,7 @@ import {
   concatenateTypologies,
   formatDate,
   formatPrice,
+  getBadgeSize,
   para,
 } from "@/utils/helpers";
 import { BudgetIcon } from "@/assets/budget-icon";
@@ -41,12 +45,19 @@ import { LocationType, projectListing } from "@/types/types";
 import { Badge } from "./badge";
 import { renderToString } from "react-dom/server";
 import dynamic from "next/dynamic";
+import MarkerClusterGroup from "react-leaflet-cluster";
 
 interface Location {
   lat: number;
   lon: number;
   name: string;
 }
+
+type BadgeIconOptions = {
+  label: string;
+  ariaLabel?: string;
+  translate?: string;
+};
 
 export const renderIcon = (
   icon: JSX.Element,
@@ -57,19 +68,44 @@ export const renderIcon = (
     icon
   )}</div>`;
 
-function getOtherLocationIcon(
-  label: string,
-  isSelected: boolean,
-  icon = true
-): L.DivIcon {
+// helper function to create badge div icon
+function createBadgeDivIcon({
+  label,
+  ariaLabel,
+  translate,
+}: BadgeIconOptions): L.DivIcon {
+  const { width, height, anchorX, anchorY } = getBadgeSize(label);
+
   return L.divIcon({
     html: renderIcon(
-      <Badge variant={"white"} className="w-max whitespace-nowrap">
+      <Badge variant="white" className="w-max whitespace-nowrap">
         {label}
       </Badge>,
-      label,
-      isSelected ? "translate(-10px, -20px)" : "translate(-15px, -20px)"
+      ariaLabel ?? label,
+      translate
     ),
+    className: "bg-transparent border-0",
+    iconSize: [width, height],
+    iconAnchor: [anchorX, anchorY],
+  });
+}
+
+function getOtherLocationIcon(label: string, isSelected: boolean): L.DivIcon {
+  return createBadgeDivIcon({
+    label,
+    translate: isSelected
+      ? "translate(-10px, -20px)"
+      : "translate(-15px, -20px)",
+  });
+}
+
+// function to create cluster icon
+function createClusterIcon(cluster: any): L.DivIcon {
+  const count = cluster.getChildCount();
+
+  return createBadgeDivIcon({
+    label: `${count}`,
+    ariaLabel: `${count} properties in this area`,
   });
 }
 
@@ -164,18 +200,26 @@ export default function DiscoveryMap({
 
           {/* Project Location Marker */}
 
-          {allFilteredData && allFilteredData.projects.length > 0
-            ? allFilteredData.projects.map((project: projectListing) => (
-                <Marker
-                  position={[project.latitude, project.longitude]}
-                  key={project.id}
-                  icon={getOtherLocationIcon(
-                    project.name,
-                    selectedProperty?.id == project.id
-                  )}
-                />
-              ))
-            : null}
+          <MarkerClusterGroup
+            chunkedLoading
+            showCoverageOnHover={false}
+            spiderfyOnMaxZoom
+            maxClusterRadius={60}
+            iconCreateFunction={createClusterIcon}
+          >
+            {allFilteredData && allFilteredData.projects.length > 0
+              ? allFilteredData.projects.map((project: projectListing) => (
+                  <Marker
+                    position={[project.latitude, project.longitude]}
+                    key={project.id}
+                    icon={getOtherLocationIcon(
+                      project.name,
+                      selectedProperty?.id == project.id
+                    )}
+                  />
+                ))
+              : null}
+          </MarkerClusterGroup>
           {selectedLocation && selectedProperty && (
             <Popup
               position={[selectedLocation.lat, selectedLocation.lon]}
