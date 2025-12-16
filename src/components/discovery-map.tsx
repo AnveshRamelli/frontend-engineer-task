@@ -1,7 +1,7 @@
 "use client";
 
-// TODO:  When zooming out, property nodes overlap and become cluttered.
-// Improve visual spacing for a better UI/UX.
+// TODO:  When zooming out, property nodes overlap and become cluttered. 
+// Improve visual spacing for a better UI/UX. 
 // ----> Completed: // Fixed by using marker clustering.
 
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -216,6 +216,15 @@ export default function DiscoveryMap({
                       project.name,
                       selectedProperty?.id == project.id
                     )}
+                    eventHandlers={{
+                      click: () => {
+                        setSelectedLocation({
+                          name: project.name,
+                          lat: project.latitude,
+                          lon: project.longitude,
+                        });
+                      },
+                    }}  
                   />
                 ))
               : null}

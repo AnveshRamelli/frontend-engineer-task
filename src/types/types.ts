@@ -26,8 +26,8 @@ export interface LocationType {
   name: string
   lat: number
   lon: number
-  distance: number
-  duration: number
+  distance?: number
+  duration?: number
   googlePlaceId?: string
 }
 
