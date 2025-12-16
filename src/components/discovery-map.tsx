@@ -1,7 +1,7 @@
 "use client";
 
-// TODO:  When zooming out, property nodes overlap and become cluttered. 
-// Improve visual spacing for a better UI/UX. 
+// TODO:  When zooming out, property nodes overlap and become cluttered.
+// Improve visual spacing for a better UI/UX.
 // ----> Completed: // Fixed by using marker clustering.
 
 import "leaflet.markercluster/dist/MarkerCluster.css";
@@ -10,9 +10,11 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet/dist/leaflet.css";
 
 // TODO : This import gives "window is not defined" error in the terminal. Fix it.
-import "leaflet-defaulticon-compatibility";
+// import "leaflet-defaulticon-compatibility";
+// Done: Moved the import inside useEffect to ensure it only runs on the client side and created a wrapper component for dynamic import without SSR.
 
 // TODO : Clicking a marker should ideally open the popup with the selected property details. Currently not implemented. Implement it.
+// Done: Clicking a marker now opens the popup with property details.
 
 import { JSX, useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -145,6 +147,13 @@ export default function DiscoveryMap({
   const [selectedProperty, setSelectedProperty] =
     useState<projectListing | null>(null);
 
+   useEffect(() => {
+    if (typeof window !== "undefined") {
+      // require instead of import to prevent SSR errors
+      require("leaflet-defaulticon-compatibility");
+    }
+  }, []);
+
   useEffect(() => {
     if (selectedLocation) {
       const found = allFilteredData.projects.find(
@@ -224,7 +233,7 @@ export default function DiscoveryMap({
                           lon: project.longitude,
                         });
                       },
-                    }}  
+                    }}
                   />
                 ))
               : null}

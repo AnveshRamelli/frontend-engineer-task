@@ -1,4 +1,4 @@
-import DiscoveryMap from "@/components/discovery-map";
+import DiscoveryMapWrapper from "@/components/discovery-map-wrapper";
 import { PropertyListing } from "@/data/property-listing";
 import { Metadata } from "next";
 
@@ -24,7 +24,7 @@ export default async function Page() {
 
   return (
     <div className="w-screen h-screen">
-      <DiscoveryMap allFilteredData={data} />
+      <DiscoveryMapWrapper  allFilteredData={data} />
     </div>
   );
 }
