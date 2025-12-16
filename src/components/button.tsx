@@ -11,6 +11,7 @@ const buttonVariants = cva(
           "bg-black text-white hover:bg-gray-900 focus:ring-black",
         outline:
           "border border-black text-black hover:bg-black hover:text-white focus:ring-black",
+        primary: "bg-primary"
       },
     },
     defaultVariants: {

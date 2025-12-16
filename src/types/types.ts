@@ -1,6 +1,6 @@
 import { SVGProps } from "react"
 
-export interface projectListing {
+export interface PropertyProject {
   id: number
   name: string
   minPrice: number

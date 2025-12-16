@@ -43,7 +43,7 @@ import { HouseIcon } from "@/assets/house-icon";
 import { LocationIcon } from "@/assets/location-icon";
 import { CalendarIcon } from "@/assets/utility";
 import L, { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
-import { LocationType, projectListing } from "@/types/types";
+import { LocationType, PropertyProject } from "@/types/types";
 import { Badge } from "./badge";
 import { renderToString } from "react-dom/server";
 import dynamic from "next/dynamic";
@@ -145,7 +145,7 @@ export default function DiscoveryMap({
   );
   const sectionRef = useRef(null);
   const [selectedProperty, setSelectedProperty] =
-    useState<projectListing | null>(null);
+    useState<PropertyProject | null>(null);
 
    useEffect(() => {
     if (typeof window !== "undefined") {
@@ -157,7 +157,7 @@ export default function DiscoveryMap({
   useEffect(() => {
     if (selectedLocation) {
       const found = allFilteredData.projects.find(
-        (prop: projectListing) => prop.name == selectedLocation.name
+        (prop: PropertyProject) => prop.name == selectedLocation.name
       );
       setSelectedProperty(found);
       const el = document.querySelector(
@@ -217,7 +217,7 @@ export default function DiscoveryMap({
             iconCreateFunction={createClusterIcon}
           >
             {allFilteredData && allFilteredData.projects.length > 0
-              ? allFilteredData.projects.map((project: projectListing) => (
+              ? allFilteredData.projects.map((project: PropertyProject) => (
                   <Marker
                     position={[project.latitude, project.longitude]}
                     key={project.id}
