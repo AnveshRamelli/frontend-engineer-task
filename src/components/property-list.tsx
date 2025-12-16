@@ -3,6 +3,7 @@
 import PropertyCard from "./property-card";
 import Pagination from "./pagination";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { PropertyProject } from "@/types/types";
 
 export default function PropertyList({
   projects,
@@ -50,9 +51,18 @@ export default function PropertyList({
 
         {/* Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((p) => (
-            <PropertyCard key={p.id} project={p} />
-          ))}
+          {
+            total === 0 ? (
+              <p className="text-center col-span-full mt-10 text-gray-500">
+                No properties found.
+                </p>
+            ) : (
+              projects.map((project: PropertyProject) => (
+                <PropertyCard key={project.id} project={project} />
+              ))
+            )
+            
+          }
         </div>
 
         {/* Pagination */}
