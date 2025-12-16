@@ -2,14 +2,19 @@
 
 // TODO:  When zooming out, property nodes overlap and become cluttered.
 // Improve visual spacing for a better UI/UX.
+// ----> Completed: // Fixed by using marker clustering.
+
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 import "leaflet/dist/leaflet.css";
 
 // TODO : This import gives "window is not defined" error in the terminal. Fix it.
-import "leaflet-defaulticon-compatibility";
-
+// import "leaflet-defaulticon-compatibility";
+// Done: Moved the import inside useEffect to ensure it only runs on the client side and created a wrapper component for dynamic import without SSR.
 
 // TODO : Clicking a marker should ideally open the popup with the selected property details. Currently not implemented. Implement it.
+// Done: Clicking a marker now opens the popup with property details.
 
 import { JSX, useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -30,6 +35,7 @@ import {
   concatenateTypologies,
   formatDate,
   formatPrice,
+  getBadgeSize,
   para,
 } from "@/utils/helpers";
 import { BudgetIcon } from "@/assets/budget-icon";
@@ -37,16 +43,23 @@ import { HouseIcon } from "@/assets/house-icon";
 import { LocationIcon } from "@/assets/location-icon";
 import { CalendarIcon } from "@/assets/utility";
 import L, { Map as LeafletMap, Marker as LeafletMarker } from "leaflet";
-import { LocationType, projectListing } from "@/types/types";
+import { LocationType, PropertyProject } from "@/types/types";
 import { Badge } from "./badge";
 import { renderToString } from "react-dom/server";
 import dynamic from "next/dynamic";
+import MarkerClusterGroup from "react-leaflet-cluster";
 
 interface Location {
   lat: number;
   lon: number;
   name: string;
 }
+
+type BadgeIconOptions = {
+  label: string;
+  ariaLabel?: string;
+  translate?: string;
+};
 
 export const renderIcon = (
   icon: JSX.Element,
@@ -57,19 +70,44 @@ export const renderIcon = (
     icon
   )}</div>`;
 
-function getOtherLocationIcon(
-  label: string,
-  isSelected: boolean,
-  icon = true
-): L.DivIcon {
+// helper function to create badge div icon
+function createBadgeDivIcon({
+  label,
+  ariaLabel,
+  translate,
+}: BadgeIconOptions): L.DivIcon {
+  const { width, height, anchorX, anchorY } = getBadgeSize(label);
+
   return L.divIcon({
     html: renderIcon(
-      <Badge variant={"white"} className="w-max whitespace-nowrap">
+      <Badge variant="white" className="w-max whitespace-nowrap">
         {label}
       </Badge>,
-      label,
-      isSelected ? "translate(-10px, -20px)" : "translate(-15px, -20px)"
+      ariaLabel ?? label,
+      translate
     ),
+    className: "bg-transparent border-0",
+    iconSize: [width, height],
+    iconAnchor: [anchorX, anchorY],
+  });
+}
+
+function getOtherLocationIcon(label: string, isSelected: boolean): L.DivIcon {
+  return createBadgeDivIcon({
+    label,
+    translate: isSelected
+      ? "translate(-10px, -20px)"
+      : "translate(-15px, -20px)",
+  });
+}
+
+// function to create cluster icon
+function createClusterIcon(cluster: any): L.DivIcon {
+  const count = cluster.getChildCount();
+
+  return createBadgeDivIcon({
+    label: `${count}`,
+    ariaLabel: `${count} properties in this area`,
   });
 }
 
@@ -107,12 +145,19 @@ export default function DiscoveryMap({
   );
   const sectionRef = useRef(null);
   const [selectedProperty, setSelectedProperty] =
-    useState<projectListing | null>(null);
+    useState<PropertyProject | null>(null);
+
+   useEffect(() => {
+    if (typeof window !== "undefined") {
+      // require instead of import to prevent SSR errors
+      require("leaflet-defaulticon-compatibility");
+    }
+  }, []);
 
   useEffect(() => {
     if (selectedLocation) {
       const found = allFilteredData.projects.find(
-        (prop: projectListing) => prop.name == selectedLocation.name
+        (prop: PropertyProject) => prop.name == selectedLocation.name
       );
       setSelectedProperty(found);
       const el = document.querySelector(
@@ -164,18 +209,35 @@ export default function DiscoveryMap({
 
           {/* Project Location Marker */}
 
-          {allFilteredData && allFilteredData.projects.length > 0
-            ? allFilteredData.projects.map((project: projectListing) => (
-                <Marker
-                  position={[project.latitude, project.longitude]}
-                  key={project.id}
-                  icon={getOtherLocationIcon(
-                    project.name,
-                    selectedProperty?.id == project.id
-                  )}
-                />
-              ))
-            : null}
+          <MarkerClusterGroup
+            chunkedLoading
+            showCoverageOnHover={false}
+            spiderfyOnMaxZoom
+            maxClusterRadius={60}
+            iconCreateFunction={createClusterIcon}
+          >
+            {allFilteredData && allFilteredData.projects.length > 0
+              ? allFilteredData.projects.map((project: PropertyProject) => (
+                  <Marker
+                    position={[project.latitude, project.longitude]}
+                    key={project.id}
+                    icon={getOtherLocationIcon(
+                      project.name,
+                      selectedProperty?.id == project.id
+                    )}
+                    eventHandlers={{
+                      click: () => {
+                        setSelectedLocation({
+                          name: project.name,
+                          lat: project.latitude,
+                          lon: project.longitude,
+                        });
+                      },
+                    }}
+                  />
+                ))
+              : null}
+          </MarkerClusterGroup>
           {selectedLocation && selectedProperty && (
             <Popup
               position={[selectedLocation.lat, selectedLocation.lon]}

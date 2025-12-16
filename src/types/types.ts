@@ -1,6 +1,6 @@
 import { SVGProps } from "react"
 
-export interface projectListing {
+export interface PropertyProject {
   id: number
   name: string
   minPrice: number
@@ -26,8 +26,8 @@ export interface LocationType {
   name: string
   lat: number
   lon: number
-  distance: number
-  duration: number
+  distance?: number
+  duration?: number
   googlePlaceId?: string
 }
 
